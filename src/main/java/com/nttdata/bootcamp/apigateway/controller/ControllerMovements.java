@@ -1,5 +1,6 @@
 package com.nttdata.bootcamp.apigateway.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nttdata.bootcamp.apigateway.entity.CashHistory;
 import com.nttdata.bootcamp.apigateway.entity.Client;
 import com.nttdata.bootcamp.apigateway.entity.Movements;
 import com.nttdata.bootcamp.apigateway.entity.RequestMovementsDto;
@@ -41,7 +43,7 @@ public class ControllerMovements {
 		return Flux.just(serviceMovements.movementsFindAll());
 	}
 	
-	@GetMapping("/allmovementsbyid/{idcliente}/{idproducto}")
+	@GetMapping(path = "/allmovementsbyid/{idcliente}/{idproducto}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Flux<List<Movements>> getAll(@PathVariable String idcliente, @PathVariable String idproducto){
 		return Flux.just(serviceMovements.findByIdcliente(idcliente, idproducto));
 	}
@@ -68,5 +70,24 @@ public class ControllerMovements {
 	{
 		return Flux.just(serviceMovements.movementsFindAllCommissions(idproduct, initdate, enddate));
 	}
+	
+	@GetMapping(path = "/getaveragebalance/{idclient}")
+	public Flux<List<CashHistory>> movementsFindAllAverageBalanceCreditBankAccountsPerMonth(@PathVariable String idclient)
+	{
+		return Flux.just(serviceMovements.movementsFindAllAverageBalanceCreditBankAccountsPerMonth(idclient));
+	}
+	
+	@TimeLimiter(name = "timelimit", fallbackMethod = "fallbackfindTenMovementsDebCred")
+	@GetMapping(path = "/gettenmovements/{idclient}")
+	public Flux<List<Movements>> findTenMovementsDebCred(@PathVariable String idclient)
+	{
+		return Flux.just(serviceMovements.findTenMovementsDebCred(idclient));
+	}
+	
+    public Flux<List<Movements>> fallbackfindTenMovementsDebCred(Exception e) {
+    	log.info("Entrando al método fallbackfindTenMovementsDebCred en el servicio ServiceMovements");
+    	log.info("message Error: " + e.getMessage());
+        return Flux.just(new ArrayList<Movements>());
+    }
 	
 }

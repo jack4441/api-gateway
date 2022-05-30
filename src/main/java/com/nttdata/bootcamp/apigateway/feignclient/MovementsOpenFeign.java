@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import com.nttdata.bootcamp.apigateway.entity.CashHistory;
 import com.nttdata.bootcamp.apigateway.entity.Movements;
 import com.nttdata.bootcamp.apigateway.entity.RequestMovementsDto;
 import com.nttdata.bootcamp.apigateway.entity.ResponseDelete;
@@ -42,4 +43,8 @@ public interface MovementsOpenFeign {
 	@GetMapping(path = "/movements/v1/getcommissionsperrange/{idproduct}/{initdate}/{enddate}")
 	List<Movements> movementsFindAllCommissions(@PathVariable String idproduct, @PathVariable String initdate, @PathVariable String enddate);
 	
+	@GetMapping(path = "/movements/v1/getaveragebalance/{idclient}")
+	List<CashHistory> movementsFindAllAverageBalanceCreditBankAccountsPerMonth(@PathVariable String idclient);
+	@GetMapping(path = "/movements/v1/gettenmovements/{idclient}")
+	List<Movements> findTenMovementsDebCred(@PathVariable String idclient);
 }

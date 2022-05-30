@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.nttdata.bootcamp.apigateway.entity.CashHistory;
 import com.nttdata.bootcamp.apigateway.entity.Movements;
 import com.nttdata.bootcamp.apigateway.entity.RequestMovementsDto;
 import com.nttdata.bootcamp.apigateway.entity.ResponseDelete;
@@ -70,6 +71,28 @@ public class ServiceMovements implements IServiceMovements {
 		return feign.movementsFindAllCommissions(idproduct, initdate, enddate);
 	}
 	
+	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackgetaveragebalance")
+	@Retry(name = "myRetry")
+	@Override
+	public List<CashHistory> movementsFindAllAverageBalanceCreditBankAccountsPerMonth(String idclient) {
+		// TODO Auto-generated method stub
+		return feign.movementsFindAllAverageBalanceCreditBankAccountsPerMonth(idclient);
+	}
+	
+	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackfindTenMovementsDebCred")
+	@Retry(name = "myRetry")
+	@Override
+	public List<Movements> findTenMovementsDebCred(String idclient) {
+		// TODO Auto-generated method stub
+		return feign.findTenMovementsDebCred(idclient);
+	}
+	
+    public List<Movements> fallbackfindTenMovementsDebCred(Exception e) {
+    	log.info("Entrando al método fallbackfindTenMovementsDebCred en el servicio ServiceMovements");
+    	log.info("message Error: " + e.getMessage());
+        return new ArrayList<Movements>();
+    }
+	
     public List<Movements> fallbackgetAll(Exception e) {
     	log.info("Entrando al método fallbackgetAll en el servicio ServiceMovements");
     	log.info("message Error: " + e.getMessage());
@@ -104,6 +127,13 @@ public class ServiceMovements implements IServiceMovements {
     	log.info("Entrando al método fallbackgetcommissions en el servicio ServiceMovements");
     	log.info("message Error: " + e.getMessage());
         return new ArrayList<Movements>();
+    }
+    
+    public List<CashHistory> fallbackgetaveragebalance(Exception e)
+    {
+    	log.info("Entrando al método fallbackgetaveragebalance en el servicio ServiceMovements");
+    	log.info("message Error: " + e.getMessage());
+    	return new ArrayList<CashHistory>();
     }
 
 }

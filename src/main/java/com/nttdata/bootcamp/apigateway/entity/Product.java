@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.apigateway.entity;
 
 import java.io.Serializable;
+import java.util.List;
 
 import lombok.Data;
 
@@ -28,5 +29,11 @@ public class Product implements Serializable {
 	private String expiration_date;
 	private String state;	
 	private double counter_transaction;
+	private double balance_day;
+	private String deposit_date;
+	private double limit_transaction;
+	private String payment_date;
+	private double count_overdue_installments;
+	private List<Accounts> bank_accounts;
 	
 }

@@ -1,5 +1,7 @@
 package com.nttdata.bootcamp.apigateway.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,11 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nttdata.bootcamp.apigateway.entity.Client;
 import com.nttdata.bootcamp.apigateway.entity.ProductDto;
 import com.nttdata.bootcamp.apigateway.entity.RequestproductDto;
-import com.nttdata.bootcamp.apigateway.feignclient.ProductOpenFeign;
+import com.nttdata.bootcamp.apigateway.entity.ResponseDelete;
+import com.nttdata.bootcamp.apigateway.service.IServiceProduct;
 
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
@@ -29,77 +32,43 @@ import reactor.core.publisher.Mono;
 public class ControllerProduct {
 
 	@Autowired
-	ProductOpenFeign feign;
+	IServiceProduct service;
 	
-	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackallproduct")
-	@TimeLimiter(name = "timelimit")
-	@Retry(name = "myRetry")
+
 	@GetMapping(path = "/allproduct", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Flux<ProductDto> getAll(){
-		return feign.getAll();
+	public Flux<List<ProductDto>> getAll(){
+		return Flux.just(service.getAll());
 	}
 	
-	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackgetOne")
-	@TimeLimiter(name = "timelimit")
-	@Retry(name = "myRetry")
 	@GetMapping("/allproductbyid/{id}")
 	public Mono<ProductDto> getOne(@PathVariable String id){
-		return feign.getOne(id);
+		return Mono.just(service.getOne(id));
 	}
 	
-	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackgetsave")
-	@TimeLimiter(name = "timelimit")
-	@Retry(name = "myRetry")
-	@PostMapping(path = "/saveproduct", produces = MediaType.APPLICATION_JSON_VALUE)
+	@Bulkhead(name= "bulkFirst")
+	@TimeLimiter(name = "timelimit", fallbackMethod = "fallbackgetsave")
+	@PostMapping(path = "/saveproduct", produces = MediaType.APPLICATION_JSON_VALUE
+		, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ProductDto> save(@RequestBody RequestproductDto body)
 	{
-		return feign.save(body);
+		return Mono.just(service.save(body));
 	}
 	
-	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackupdate")
-	@TimeLimiter(name = "timelimit")
-	@Retry(name = "myRetry")
-	@PutMapping(path = "/updateclient", produces = MediaType.APPLICATION_JSON_VALUE)
+	@PutMapping(path = "/updateclient", produces = MediaType.APPLICATION_JSON_VALUE
+			, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ProductDto> update(@RequestBody RequestproductDto body){
-		return feign.update(body);
+		return Mono.just(service.update(body));
 	}
 	
-	@CircuitBreaker(name = "mycircuitbreaker", fallbackMethod = "fallbackdelete")
-	@TimeLimiter(name = "timelimit")
-	@Retry(name = "myRetry")
-	@DeleteMapping("/deleteclient/{id}")
-	public Mono<Void> delete(@PathVariable String id){
-		return feign.delete(id);
+	@DeleteMapping(path = "/deleteclient/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Mono<ResponseDelete> delete(@PathVariable String id){
+		return Mono.just(service.delete(id));
 	}
 	
-    public Flux<ProductDto> fallbackallproduct(Exception e) {
-    	log.info("Entrando al método fallbackallproduct en el controllador ControllerProduct");
+    public Mono<ProductDto> fallbackgetsave(RequestproductDto body, Exception e) {
+    	log.info("Entrando al método fallbackallproduct en el servicio ServiceProduct");
     	log.info("message Error: " + e.getMessage());
-        return Flux.empty();
-    }
-    
-    public Mono<ProductDto> fallbackgetOne(Exception e) {
-    	log.info("Entrando al método fallbackgetOne en el controllador ControllerProduct");
-    	log.info("message Error: " + e.getMessage());
-        return Mono.empty();
-    }
-    
-    public Mono<ProductDto> fallbackgetsave(Exception e) {
-    	log.info("Entrando al método fallbackallproduct en el controllador ControllerProduct");
-    	log.info("message Error: " + e.getMessage());
-        return Mono.empty();
-    }
-    
-    public Mono<ProductDto> fallbackupdate(Exception e) {
-    	log.info("Entrando al método fallbackupdate en el controllador ControllerProduct");
-    	log.info("message Error: " + e.getMessage());
-        return Mono.empty();
-    }
-    
-    public Mono<ProductDto> fallbackdelete(Exception e) {
-    	log.info("Entrando al método fallbackdelete en el controllador ControllerProduct");
-    	log.info("message Error: " + e.getMessage());
-        return Mono.empty();
+        return Mono.just(new ProductDto());
     }
 	
 }
